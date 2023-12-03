@@ -4,6 +4,10 @@ import hashlib
 from chromadb import Collection, PersistentClient
 from chromadb.utils import embedding_functions
 from pypdf import PdfReader
+import nltk
+
+nltk.download('punkt')
+
 
 MAX_SEQ_LEN = 384
 sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-mpnet-base-v2")
@@ -36,16 +40,18 @@ def index_file(file_col:Collection, file:str, hash:str):
     print(f"Index file {file} ... ", end="")
     try:
         reader = PdfReader(file)
+        text = " ".join(page.extract_text() for page in reader.pages)
         for page in reader.pages:
             text = page.extract_text()
             if len(text) < 10: # avoid too small content
                 continue
-            
-            partitions = partition_text(text)
+            sentences = nltk.sent_tokenize(text)
             index = 0
-            for part in partitions:
+            for sentence in sentences:
+                if len(sentence) < 10:
+                    continue
                 file_col.add(
-                    documents=[part],
+                    documents=[sentence],
                     metadatas=[{'hash': hash, 'file': str(file), 'page': page.page_number}],
                     ids=[f"{hash}-{page.page_number}-{index}"]
                 )

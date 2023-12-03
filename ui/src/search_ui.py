@@ -27,6 +27,6 @@ if query:
         count = len(ids)
         st.text (f"Found {count} results")
         for i in range(0,count):
-            st.subheader(meta[i]['file'])
+            st.subheader(f"{meta[i]['file']} - Page {meta[i]['page']}")
             st.markdown(docs[i])
     
