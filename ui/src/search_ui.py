@@ -3,7 +3,7 @@ from os import environ
 from chromadb import Collection, PersistentClient
 from chromadb.utils import embedding_functions
 
-#sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
+sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-mpnet-base-v2")
 
 def get_env(name:str) -> str:
     val = environ.get(name)

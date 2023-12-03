@@ -5,6 +5,7 @@ from chromadb import Collection, PersistentClient
 from chromadb.utils import embedding_functions
 from pypdf import PdfReader
 
+MAX_SEQ_LEN = 384
 sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-mpnet-base-v2")
 
 def get_env(name:str) -> str:
@@ -27,6 +28,10 @@ def get_files_to_index(root:str) -> [str]:
             result.append(path)
     return result
 
+def partition_text(text:str) -> [str]:
+    # TODO split with overlap
+    return [text[i:i+MAX_SEQ_LEN] for i in range(0, len(text), MAX_SEQ_LEN)]
+
 def index_file(file_col:Collection, file:str, hash:str):
     print(f"Index file {file} ... ", end="")
     try:
@@ -35,11 +40,16 @@ def index_file(file_col:Collection, file:str, hash:str):
             text = page.extract_text()
             if len(text) < 10: # avoid too small content
                 continue
-            file_col.add(
-                documents=[text],
-                metadatas=[{'hash': hash, 'file': str(file)}],
-                ids=[f"{hash}-{page.page_number}"]
-            )
+            
+            partitions = partition_text(text)
+            index = 0
+            for part in partitions:
+                file_col.add(
+                    documents=[part],
+                    metadatas=[{'hash': hash, 'file': str(file), 'page': page.page_number}],
+                    ids=[f"{hash}-{page.page_number}-{index}"]
+                )
+                index = index + 1
         print("ok")
     except:
         print("error")
